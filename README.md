@@ -1,0 +1,2 @@
+# UploadGithubForTypecho
+Typecho文章附件上传Github仓库插件
