@@ -9,7 +9,8 @@ jsDelivr为融合CDN，在全球分布750余节点（包括中国），并Github
 关于jsDelivr运用于博客的优势本文不再赘述，具体请[访问这里](https://qwq.best/dev/113.html "访问这里")。<br>
 
 ## 版本记录
-v1.0.0 - 2019.1.20
+v1.0.1 - 2019.1.20<br>
+v1.0.0 - 2019.1.20<br>
 
 ## 安装插件
 项目地址：<https://github.com/AyagawaSeirin/UploadGithubForTypecho><br>
