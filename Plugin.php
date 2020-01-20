@@ -5,7 +5,7 @@
  * @package UploadGithubForTypecho
  * @author AyagawaSeirin
  * @link https://qwq.best/
- * @version 1.0.0
+ * @version 1.0.1
  * @dependence 1.0-*
  *
  */
@@ -76,7 +76,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
                             async: true,
                             type: "GET",
                             success: function (data) {
-                                var now = "1.0.0";
+                                var now = "1.0.1";
                                 var newest = data[0][\'tag_name\'];
                                 if(newest == null){
                                     notice = "检查更新失败，请手动访问插件项目地址获取更新。";
@@ -187,6 +187,9 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         curl_close($ch);
 
         /* 写到本地文件 */
+        if (!is_dir($fileDir)){
+            mkdir($fileDir,0777,true);
+        }
         file_put_contents(__TYPECHO_ROOT_DIR__ . $path, $fileContent);
 
 
