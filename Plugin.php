@@ -5,7 +5,7 @@
  * @package UploadGithubForTypecho
  * @author AyagawaSeirin
  * @link https://qwq.best/
- * @version 1.0.2
+ * @version 1.0.3
  * @dependence 1.0-*
  *
  */
@@ -77,7 +77,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
                             async: true,
                             type: "GET",
                             success: function (data) {
-                                var now = "1.0.2";
+                                var now = "1.0.3";
                                 var newest = data[0][\'tag_name\'];
                                 if(newest == null){
                                     notice = "检查更新失败，请手动访问插件项目地址获取更新。";
@@ -180,7 +180,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
             "User-Agent:" . $options->githubRepo
         );
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/" . $options->githubUser . "/" . $options->githubRepo . "/contents" . $path . "?access_token=" . $options->githubToken);
+        curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/" . $options->githubUser . "/" . $options->githubRepo . "/contents" . $path_relatively . "?access_token=" . $options->githubToken);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
