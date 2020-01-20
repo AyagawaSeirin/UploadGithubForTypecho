@@ -5,7 +5,7 @@
  * @package UploadGithubForTypecho
  * @author AyagawaSeirin
  * @link https://qwq.best/
- * @version 1.0.1
+ * @version 1.0.2
  * @dependence 1.0-*
  *
  */
@@ -14,6 +14,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
 {
     //上传文件目录
     const UPLOAD_DIR = '/usr/uploads';
+
 
     /**
      * 插件激活接口
@@ -76,7 +77,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
                             async: true,
                             type: "GET",
                             success: function (data) {
-                                var now = "1.0.1";
+                                var now = "1.0.2";
                                 var newest = data[0][\'tag_name\'];
                                 if(newest == null){
                                     notice = "检查更新失败，请手动访问插件项目地址获取更新。";
@@ -98,7 +99,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         
        
         ';
-        $desc1 = new Typecho_Widget_Helper_Form_Element_Text('desc1', NULL, '', _t('插件使用说明：'),_t("
+        $desc1 = new Typecho_Widget_Helper_Form_Element_Text('desc1', NULL, '', _t('插件使用说明：'), _t("
         <ol>
         <li>本插件用于将文章附件(如图片)上传至您的(公开的)Github的仓库中，并使用jsDelivr访问仓库文件达到优化文件访问速度的目的。了解jsDelivr应用于博客中的优势，您可以<a href='https://qwq.best/dev/113.html' target='_blank'>点击这里</a>。<br></li>
         <li>项目地址：<a href='https://github.com/AyagawaSeirin/UploadGithubForTypecho' target='_blank'>https://github.com/AyagawaSeirin/UploadGithubForTypecho</a><br></li>
@@ -149,8 +150,10 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $options = Typecho_Widget::widget('Widget_Options')->plugin('UploadGithubForTypecho');
         //获取文件名
         $date = new Typecho_Date($options->gmtTime);
-        $fileDir = self::getUploadDir() . '/' . $date->year . '/' . $date->month;
+        $fileDir_relatively = self::getUploadDir(true) . '/' . $date->year . '/' . $date->month;
+        $fileDir = self::getUploadDir(false) . '/' . $date->year . '/' . $date->month;
         $fileName = sprintf('%u', crc32(uniqid())) . '.' . $ext;
+        $path_relatively = $fileDir_relatively . '/' . $fileName;
         $path = $fileDir . '/' . $fileName;
         //获得上传文件
         $uploadfile = self::getUploadFile($file);
@@ -187,16 +190,21 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         curl_close($ch);
 
         /* 写到本地文件 */
-        if (!is_dir($fileDir)){
-            mkdir($fileDir,0777,true);
+        if (!is_dir($fileDir)) {
+            if (self::makeUploadDir($fileDir)) {
+                file_put_contents($path, $fileContent);
+            } else {
+                //目录创建失败，不写文件
+            }
+        } else {
+            file_put_contents($path, $fileContent);
         }
-        file_put_contents(__TYPECHO_ROOT_DIR__ . $path, $fileContent);
 
 
         //返回相对存储路径
         return array(
             'name' => $file['name'],
-            'path' => $path,
+            'path' => $path_relatively,
             'size' => $file['size'],
             'type' => $ext,
             'mime' => @Typecho_Common::mimeContentType($path)
@@ -231,8 +239,8 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $fileContent = file_get_contents($uploadfile);
 
         //判断仓库内相对路径
-        $filename = __TYPECHO_ROOT_DIR__. $content['attachment']->path;//本地文件绝对路径
-        $github_path = $options->githubDirectory . str_replace(self::getUploadDir(),"",$content['attachment']->path);
+        $filename = __TYPECHO_ROOT_DIR__ . $content['attachment']->path;//本地文件绝对路径
+        $github_path = $options->githubDirectory . str_replace(self::getUploadDir(), "", $content['attachment']->path);
 
         //获取文件sha
         $header = array(
@@ -245,13 +253,13 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $output = json_decode(curl_exec($ch),true);
+        $output = json_decode(curl_exec($ch), true);
         curl_close($ch);
         $sha = $output['sha'];
 
         /* 更新Github仓库内文件 */
         $data = array(
-            "message" => "Update file " . str_replace(self::getUploadDir(),"",$content['attachment']->path),
+            "message" => "Update file " . str_replace(self::getUploadDir(), "", $content['attachment']->path),
             "content" => base64_encode($fileContent),
             "sha" => $sha,
         );
@@ -304,8 +312,8 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $options = Typecho_Widget::widget('Widget_Options')->plugin('UploadGithubForTypecho');
 
         //判断仓库内相对路径
-        $filename = __TYPECHO_ROOT_DIR__. $content['attachment']->path;
-        $github_path = $options->githubDirectory . str_replace(self::getUploadDir(),"",$content['attachment']->path);
+        $filename = __TYPECHO_ROOT_DIR__ . $content['attachment']->path;
+        $github_path = $options->githubDirectory . str_replace(self::getUploadDir(), "", $content['attachment']->path);
 
         //获取文件sha
         $header = array(
@@ -318,7 +326,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $output = json_decode(curl_exec($ch),true);
+        $output = json_decode(curl_exec($ch), true);
         curl_close($ch);
         $sha = $output['sha'];
 
@@ -373,7 +381,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         //获取设置参数
         $options = Typecho_Widget::widget('Widget_Options')->plugin('UploadGithubForTypecho');
         $latest = "";
-        if($options->urlType == "latest"){
+        if ($options->urlType == "latest") {
             $latest = "@latest";
         }
         return Typecho_Common::url($content['attachment']->path, "https://cdn.jsdelivr.net/gh/" . $options->githubUser . "/" . $options->githubRepo . $latest);
@@ -395,12 +403,17 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
     /**
      * 获取文件上传目录
      */
-    private static function getUploadDir()
+    private static function getUploadDir($relatively = true)
     {
-        if (defined('__TYPECHO_UPLOAD_DIR__')) {
-            return __TYPECHO_UPLOAD_DIR__;
+        if ($relatively) {
+            if (defined('__TYPECHO_UPLOAD_DIR__')) {
+                return __TYPECHO_UPLOAD_DIR__;
+            } else {
+                return self::UPLOAD_DIR;
+            }
         } else {
-            return self::UPLOAD_DIR;
+            return Typecho_Common::url(defined('__TYPECHO_UPLOAD_DIR__') ? __TYPECHO_UPLOAD_DIR__ : self::UPLOAD_DIR,
+                defined('__TYPECHO_UPLOAD_ROOT_DIR__') ? __TYPECHO_UPLOAD_ROOT_DIR__ : __TYPECHO_ROOT_DIR__);
         }
     }
 
@@ -410,5 +423,34 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
     private static function getUploadFile($file)
     {
         return isset($file['tmp_name']) ? $file['tmp_name'] : (isset($file['bytes']) ? $file['bytes'] : (isset($file['bits']) ? $file['bits'] : ''));
+    }
+
+    /**
+     * 创建上传路径
+     */
+    private static function makeUploadDir($path)
+    {
+        $path = preg_replace("/\\\+/", '/', $path);
+        $current = rtrim($path, '/');
+        $last = $current;
+
+        while (!is_dir($current) && false !== strpos($path, '/')) {
+            $last = $current;
+            $current = dirname($current);
+        }
+
+        if ($last == $current) {
+            return true;
+        }
+
+        if (!@mkdir($last)) {
+            return false;
+        }
+
+        $stat = @stat($last);
+        $perms = $stat['mode'] & 0007777;
+        @chmod($last, $perms);
+
+        return self::makeUploadDir($path);
     }
 }
