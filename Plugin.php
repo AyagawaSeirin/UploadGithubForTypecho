@@ -3,7 +3,7 @@
  * 附件上传Github仓库插件
  *
  * @package UploadGithubForTypecho
- * @author PPLin
+ * @author AyagawaSeirin
  * @link https://qwq.best/
  * @version 1.0.0
  * @dependence 1.0-*
@@ -70,14 +70,29 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
                     {
                         document.getElementsByName("desc1")[0].type = "hidden";
                         document.getElementsByName("desc2")[0].type = "hidden";
+                        var notice = "正在检查更新...";
                         $.ajax({
                             url: "https://api.github.com/repos/AyagawaSeirin/UploadGithubForTypecho/releases",
                             async: true,
                             type: "GET",
                             success: function (data) {
-                                
+                                var now = "1.0.0";
+                                var newest = data[0][\'tag_name\'];
+                                if(newest == null){
+                                    notice = "检查更新失败，请手动访问插件项目地址获取更新。";
+                                }else if(newest == now){
+                                    notice = "您当前的插件是最新版本：v" + newest;
+                                } else {
+                                    notice = "插件需要更新，当前版本：v" + now + "，最新版本：v" + newest + "。<a href=\'https://github.com/AyagawaSeirin/UploadGithubForTypecho\'>点击这里</a>获取最新版本。";
+                                }
+                                $(\'#UploadGithubForTypecho-check-update\').html(notice);
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                notice = "检查更新失败，请手动访问插件项目地址获取更新。";
+                                $(\'#UploadGithubForTypecho-check-update\').html(notice);
                             }
                         });
+                        
                     }
                 </script>
         
@@ -86,26 +101,25 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $desc1 = new Typecho_Widget_Helper_Form_Element_Text('desc1', NULL, '', _t('插件使用说明：'),_t("
         <ol>
         <li>本插件用于将文章附件(如图片)上传至您的(公开的)Github的仓库中，并使用jsDelivr访问仓库文件达到优化文件访问速度的目的。了解jsDelivr应用于博客中的优势，您可以<a href='https://qwq.best/dev/113.html' target='_blank'>点击这里</a>。<br></li>
-        <li>项目地址：<a href='https://github.com/AyagawaSeirin/' target='_blank'>https://github.com/AyagawaSeirin/</a><br></li>
-        <li>当前版本：v1.0.0，您可以在上面的Github项目地址检查更新。<br></li>
+        <li>项目地址：<a href='https://github.com/AyagawaSeirin/UploadGithubForTypecho' target='_blank'>https://github.com/AyagawaSeirin/UploadGithubForTypecho</a><br></li>
+        <li>插件使用说明与教程：<a href='https://qwq.best/dev/152.html' target='_blank'>https://qwq.best/dev/152.html</a><br></li>
         <li>插件不会验证配置的正确性，请自行确认配置信息正确，否则不能正常使用。<br></li>
         <li>插件会替换所有之前上传的文件的链接，若启用插件前存在已上传的文件，请自行将其上传至仓库相同目录中以保证正常显示；同时，禁用插件也会导致链接恢复。插件在上传文件同时也会在本地相应位置留下文件，所以禁用插件后文件链接恢复不用担心文件不存在问题。</li>
+        <li>注意：由于CDN缓存问题，修改文件后访问链接可能仍然是旧文件，所以建议删掉旧文件再上传新文件，不建议使用修改文件功能。jsDelivr刷新缓存功能暂未推出，推出后本插件会及时更新。</li>
         </ol>
         "));
         $github_user = new Typecho_Widget_Helper_Form_Element_Text('githubUser',
-            NULL, 'AyagawaSeirin', _t('Github用户名'), _t('您的Github用户名'));
+            NULL, '', _t('Github用户名'), _t('您的Github用户名'));
         $github_repo = new Typecho_Widget_Helper_Form_Element_Text('githubRepo',
-            NULL, 'Picture', _t('Github仓库名'), _t('您的Github仓库名'));
-        $github_token = new Typecho_Widget_Helper_Form_Element_Text('githubToken', NULL, '24f3b95da0abe0215afeb32dd2ab9703594501d8', _t('Github账号token'), _t('不知道如何获取账号token请<a href="#" target="_blank">点击这里</a>'));
+            NULL, '', _t('Github仓库名'), _t('您的Github仓库名'));
+        $github_token = new Typecho_Widget_Helper_Form_Element_Text('githubToken', NULL, '', _t('Github账号token'), _t('不知道如何获取账号token请<a href="https://qwq.best/dev/151.html" target="_blank">点击这里</a>'));
         $github_directory = new Typecho_Widget_Helper_Form_Element_Text('githubDirectory',
             NULL, '/usr/uploads', _t('Github仓库内的上传目录'), _t('比如/usr/uploads，最后一位不需要斜杠'));
         $url_type = new Typecho_Widget_Helper_Form_Element_Select('urlType',
-            array('latest' => '访问最新版本', 'direct' => '直接访问'), 'latest', _t('文件链接访问方式：'), _t('建议选择"访问最新版本"。若修改图片，直接访问方式不方便更新缓存'));
+            array('latest' => '访问最新版本', 'direct' => '直接访问'), 'latest', _t('文件链接访问方式：'), _t('建议选择"访问最新版本"。若修改图片，直接访问方式不方便更新缓存。'));
         $desc2 = new Typecho_Widget_Helper_Form_Element_Text('desc2', NULL, '', _t('以下两个参数为选填，留空则为仓库所有者信息。若填写则必须两个都填写。如果您不知道该如何填写，默认即可，不需要修改。'));
-        $commit_name = new Typecho_Widget_Helper_Form_Element_Text('commitName',
-            NULL, 'UploadGithubForTypecho', _t('提交文件者名称'), _t('提交Commit的提交者名称，留空则为仓库所属者。'));
-        $commit_email = new Typecho_Widget_Helper_Form_Element_Text('commitEmail',
-            NULL, 'i@qwq.best', _t('提交文件者邮箱'), _t('提交Commit的提交者名称，留空则为仓库所属者。'));
+        $commit_name = new Typecho_Widget_Helper_Form_Element_Text('commitName', NULL, 'UploadGithubForTypecho', _t('提交文件者名称'), _t('提交Commit的提交者名称，留空则为仓库所属者。'));
+        $commit_email = new Typecho_Widget_Helper_Form_Element_Text('commitEmail', NULL, 'UploadGithubForTypecho@typecho.com', _t('提交文件者邮箱'), _t('提交Commit的提交者邮箱，留空则为仓库所属者。'));
         $form->addInput($desc1);
         $form->addInput($github_user->addRule('required', _t('请输入Github用户名')));
         $form->addInput($github_repo->addRule('required', _t('请输入Github仓库名')));
@@ -115,9 +129,6 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $form->addInput($desc2);
         $form->addInput($commit_name);
         $form->addInput($commit_email);
-
-        echo '<script>
-        </script>';
     }
 
     /**
@@ -358,7 +369,11 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
     {
         //获取设置参数
         $options = Typecho_Widget::widget('Widget_Options')->plugin('UploadGithubForTypecho');
-        return Typecho_Common::url($content['attachment']->path, "https://cdn.jsdelivr.net/gh/" . $options->githubUser . "/" . $options->githubRepo . "@latest");
+        $latest = "";
+        if($options->urlType == "latest"){
+            $latest = "@latest";
+        }
+        return Typecho_Common::url($content['attachment']->path, "https://cdn.jsdelivr.net/gh/" . $options->githubUser . "/" . $options->githubRepo . $latest);
     }
 
     /**
