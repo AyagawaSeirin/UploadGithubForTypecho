@@ -10,6 +10,9 @@ jsDelivr为融合CDN，在全球分布750余节点（包括中国），并Github
 
 ## 最新版本
 1.1.0 - 2020.01.27<br>
+更新内容：<br>
+1.可自己选择是否将文件保存到本地<br>
+2.新增错误日志功能，方便定位错误<br>
 
 ## 安装插件
 项目地址：<https://github.com/AyagawaSeirin/UploadGithubForTypecho><br>
