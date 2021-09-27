@@ -5,7 +5,7 @@
  * @package UploadGithubForTypecho
  * @author AyagawaSeirin
  * @link https://qwq.best/
- * @version 1.1.0
+ * @version 1.1.1
  * @dependence 1.0-*
  *
  */
@@ -104,7 +104,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         <ol>
         <li>本插件用于将文章附件(如图片)上传至您的(公开的)Github的仓库中，并使用jsDelivr访问仓库文件达到优化文件访问速度的目的。了解jsDelivr应用于博客中的优势，您可以<a href='https://qwq.best/dev/113.html' target='_blank'>点击这里</a>。<br></li>
         <li>项目地址：<a href='https://github.com/AyagawaSeirin/UploadGithubForTypecho' target='_blank'>https://github.com/AyagawaSeirin/UploadGithubForTypecho</a><br></li>
-        <li>插件使用说明与教程：<a href='https://qwq.best/dev/152.html' target='_blank'>https://qwq.best/dev/152.html</a><br></li>
+        <li>插件使用说明与教程：<a href='https://www.bilibili.com/read/cv4627037' target='_blank'>https://www.bilibili.com/read/cv4627037</a><br></li>
         <li>插件不会验证配置的正确性，请自行确认配置信息正确，否则不能正常使用。<br></li>
         <li>插件会替换所有之前上传的文件的链接，若启用插件前存在已上传的文件，请自行将其上传至仓库相同目录中以保证正常显示；同时，禁用插件也会导致链接恢复。上传的文件保存在本地的问题请看下面相关配置项。</li>
         <li>注意：由于CDN缓存问题，修改文件后访问链接可能仍然是旧文件，所以建议删掉旧文件再上传新文件，不建议使用修改文件功能。jsDelivr刷新缓存功能暂未推出，推出后本插件会及时更新。</li>
@@ -183,11 +183,12 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
             $data['committer'] = $committer;
         }
         $header = array(
-            "Content-Type:application/json",
-            "User-Agent:" . $options->githubRepo
+            "Content-Type:application/vnd.github.v3.json",
+            "User-Agent:" . $options->githubRepo,
+            "Authorization: token " . $options->githubToken
         );
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/" . $options->githubUser . "/" . $options->githubRepo . "/contents" . $path_relatively . "?access_token=" . $options->githubToken);
+        curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/" . $options->githubUser . "/" . $options->githubRepo . "/contents" . $path_relatively );
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
