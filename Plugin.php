@@ -78,7 +78,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
                             async: true,
                             type: "GET",
                             success: function (data) {
-                                var now = "1.1.0";
+                                var now = "1.1.1";
                                 var newest = data[0][\'tag_name\'];
                                 if(newest == null){
                                     notice = "检查更新失败，请手动访问插件项目地址获取更新。";
