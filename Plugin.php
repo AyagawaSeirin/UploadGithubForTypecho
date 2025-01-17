@@ -14,6 +14,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
 {
     //上传文件目录
     const UPLOAD_DIR = '/usr/uploads';
+    const DEFAULT_CDN_PREFIX = 'https://gcore.jsdelivr.net/gh/';
 
 
     /**
@@ -78,7 +79,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
                             async: true,
                             type: "GET",
                             success: function (data) {
-                                var now = "1.1.0";
+                                var now = "1.1.1";
                                 var newest = data[0][\'tag_name\'];
                                 if(newest == null){
                                     notice = "检查更新失败，请手动访问插件项目地址获取更新。";
@@ -118,6 +119,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $github_token = new Typecho_Widget_Helper_Form_Element_Text('githubToken', NULL, '', _t('Github账号token'), _t('不知道如何获取账号token请<a href="https://qwq.best/dev/151.html" target="_blank">点击这里</a>'));
         $github_directory = new Typecho_Widget_Helper_Form_Element_Text('githubDirectory',
             NULL, '/usr/uploads', _t('Github仓库内的上传目录'), _t('比如/usr/uploads，最后一位不需要斜杠'));
+        $cdn_prefix = new Typecho_Widget_Helper_Form_Element_Text('cdnPrefix', NULL, self::DEFAULT_CDN_PREFIX, _t('jsdelivr的cdn地址'), _t('比如https://gcore.jsdelivr.net/gh/，失效时替换，注意以/结尾'));
         $url_type = new Typecho_Widget_Helper_Form_Element_Select('urlType', array('latest' => '访问最新版本', 'direct' => '直接访问'), 'latest', _t('文件链接访问方式：'), _t('建议选择"访问最新版本"。若修改图片，直接访问方式不方便更新缓存。'));
         $desc3 = new Typecho_Widget_Helper_Form_Element_Text('desc3', NULL, '', _t('由于Linux权限问题，可能会由于无法创建目录导致文件保存到本地失败而报错异常，请给予本地上传目录777权限。<br>您也可以选择不保存到本地，但可能导致您的主题或其他插件的某些功能异常。<br>您也可以在每一月手动创建当月的目录，避免出现目录创建失败问题（推荐）。'));
         $if_save = new Typecho_Widget_Helper_Form_Element_Select('ifSave', array('save' => '保存到本地', 'notsave' => '不保存到本地'), 'save', _t('是否保存在本地：'), _t('是否将上传的文件保存在本地。'));
@@ -128,6 +130,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         $form->addInput($github_user->addRule('required', _t('请输入Github用户名')));
         $form->addInput($github_repo->addRule('required', _t('请输入Github仓库名')));
         $form->addInput($github_token->addRule('required', _t('请输入Github账号token')));
+        $form->addInput($cdn_prefix ->addRule('required', _t('请输入cdn地址')));
         $form->addInput($github_directory->addRule('required', _t('请输入Github上传目录')));
         $form->addInput($url_type);
         $form->addInput($desc3);
@@ -400,7 +403,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
     public static function attachmentDataHandle($content)
     {
         $options = Typecho_Widget::widget('Widget_Options')->plugin('UploadGithubForTypecho');
-        $filePath = "https://cdn.jsdelivr.net/gh/" . $options->githubUser . "/" . $options->githubRepo . "@latest" . $content['attachment']->path;
+        $filePath = $options->cdnPrefix . $options->githubUser . "/" . $options->githubRepo . "@latest" . $content['attachment']->path;
         return file_get_contents($filePath);
     }
 
@@ -416,7 +419,7 @@ class UploadGithubForTypecho_Plugin implements Typecho_Plugin_Interface
         if ($options->urlType == "latest") {
             $latest = "@latest";
         }
-        return Typecho_Common::url($content['attachment']->path, "https://cdn.jsdelivr.net/gh/" . $options->githubUser . "/" . $options->githubRepo . $latest);
+        return Typecho_Common::url($content['attachment']->path, $options->cdnPrefix . $options->githubUser . "/" . $options->githubRepo . $latest);
     }
 
     private static function writeErrorLog($path, $content)
